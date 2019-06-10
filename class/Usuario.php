@@ -74,6 +74,43 @@ class Usuario {
 
 	}
 
+	public static function getList()
+	{
+		$sql = new Sql();
+
+		return $sql->select("SELECT * FROM myguests ORDER BY firstname");
+	}
+
+	public static function search($name){
+
+		$sql = new Sql();
+
+		return $sql->select("SELECT * FROM myguests WHERE firstname LIKE :SEARCH ORDER BY firstname",[
+			':SEARCH'=>"%" . $name . "%" 
+		]);
+
+	}
+	public function login($login, $password)
+	{
+		$sql = new Sql();
+
+		$results = $sql->select("SELECT * FROM myguests WHERE firstname = :LOGIN and lastname = :PASSWORD", [
+			':LOGIN'=>$login,
+			':PASSWORD'=>$password
+		]);
+
+		if (count($results) > 0)
+		{
+			$row = $results[0];
+			$this->setFirstname($row['firstname']);
+			$this->setLastname($row['lastname']);
+			$this->setEmail($row['email']);
+			$this->setReg_date(new DateTime($row['reg_date']));
+		} else {
+			throw new Exception ("Login e/ou senha invalidos");
+		}
+	}
+
 	public function __toString(){
 		return json_encode(array(
 			'id'=>$this->getId(),
