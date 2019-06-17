@@ -3,6 +3,8 @@
 
 class Usuario {
 	private $id;
+	private $login;
+	private $senha;
 	private $firstname;
 	private $lastname;
 	private $email;
@@ -17,33 +19,26 @@ class Usuario {
 	{
 		return $this->id = $id;
 	}
-	public function getFirstname()
+	public function getLogin()
 	{
-		return $this->firstname;
+		return $this->login;
 	}
 
-	public function setFirstname($firstname)
+	public function setLogin($login)
 	{
-		return $this->firstname = $firstname;
+		return $this->login = $login;
 	}
-	public function getLastname()
+	public function getSenha()
 	{
-		return $this->lastname;
-	}
-
-	public function setLastname($lastname)
-	{
-		return $this->lastname = $lastname;
-	}
-	public function getEmail()
-	{
-		return $this->email;
+		return $this->senha;
 	}
 
-	public function setEmail($email)
+	public function setSenha($senha)
 	{
-		return $this->email = $email;
+		return $this->senha = $senha;
 	}
+	
+	
 	public function getReg_date()
 	{
 		return $this->reg_date;
@@ -64,12 +59,7 @@ class Usuario {
 
 		if (count($results) > 0){
 
-			$row = $results[0];
-			$this->setId($row['id']);
-			$this->setFirstname($row['firstname']);
-			$this->setLastname($row['lastname']);
-			$this->setEmail($row['email']);
-			$this->setReg_date(new DateTime($row['reg_date']));			
+			$this->setData($results[0]);		
 		}
 
 	}
@@ -78,14 +68,14 @@ class Usuario {
 	{
 		$sql = new Sql();
 
-		return $sql->select("SELECT * FROM myguests ORDER BY firstname");
+		return $sql->select("SELECT * FROM myguests ORDER BY login");
 	}
 
 	public static function search($name){
 
 		$sql = new Sql();
 
-		return $sql->select("SELECT * FROM myguests WHERE firstname LIKE :SEARCH ORDER BY firstname",[
+		return $sql->select("SELECT * FROM myguests WHERE login LIKE :SEARCH ORDER BY login",[
 			':SEARCH'=>"%" . $name . "%" 
 		]);
 
@@ -94,29 +84,74 @@ class Usuario {
 	{
 		$sql = new Sql();
 
-		$results = $sql->select("SELECT * FROM myguests WHERE firstname = :LOGIN and lastname = :PASSWORD", [
+		$results = $sql->select("SELECT * FROM myguests WHERE login = :LOGIN and senha = :PASSWORD", [
 			':LOGIN'=>$login,
 			':PASSWORD'=>$password
 		]);
 
 		if (count($results) > 0)
 		{
-			$row = $results[0];
-			$this->setFirstname($row['firstname']);
-			$this->setLastname($row['lastname']);
-			$this->setEmail($row['email']);
-			$this->setReg_date(new DateTime($row['reg_date']));
+			
+			$this->setData($results[0]);
+			
 		} else {
 			throw new Exception ("Login e/ou senha invalidos");
 		}
 	}
 
+	public function setData($data){
+
+		$this->setId($data['id']);
+		$this->setLogin($data['login']);
+		$this->setSenha($data['senha']);
+		$this->setReg_date(new DateTime($data['reg_date']));
+
+	}
+
+	public function insert()
+	{
+		$sql = new Sql();
+
+			$results = $sql->select("CALL sp_usuarios_insert(:LOGIM, :PASSWORD)",[
+				':LOGIM'=>$this->getLogin(),
+				':PASSWORD'=>$this->getSenha()
+			]);
+		if (count($results) > 0)
+		{
+			$this->setData($results[0]);
+			
+		}			
+
+	}
+
+	public function update($login, $password)
+	{
+		$this->setLogin($login);
+		$this->setSenha($password);
+		
+		$sql = new Sql();
+
+		$sql->query("UPDATE myguests SET login = :LOGIN, senha = :PASSWORD where id = :ID", [
+			':LOGIN'=>$this->getLogin(),
+			':PASSWORD'=>$this->getSenha(),
+			':ID'=>$this->getId()
+		]);
+
+
+	}
+
+	public function __construct($login = "", $password = ""){
+
+		$this->setLogin($login);
+		$this->setSenha($password);
+
+	}
+
 	public function __toString(){
 		return json_encode(array(
 			'id'=>$this->getId(),
-			'firstname'=>$this->getFirstname(),
-			'lestname'=>$this->getLastname(),
-			'email'=>$this->getEmail(),
+			'login'=>$this->getLogin(),
+			'senha'=>$this->getSenha(),			
 			'reg_date'=>$this->getReg_date()->format("d/m/y H:i:s")
 		));
 	}
